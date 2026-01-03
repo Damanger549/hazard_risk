@@ -1,23 +1,24 @@
 # Core
-numpy
-pandas
-scipy
+numpy>=1.26
+pandas>=2.0
+scipy>=1.11
 
 # FastAPI backend
-fastapi
-uvicorn
-pydantic
+fastapi>=0.110
+uvicorn>=0.27
+gunicorn>=21.2
+pydantic>=2.6
 
 # Google Earth Engine
-earthengine-api
-google-api-python-client
-google-auth
-google-auth-httplib2
-google-auth-oauthlib
+earthengine-api>=0.1.390
+google-api-python-client>=2.110
+google-auth>=2.27
+google-auth-httplib2>=0.2.0
+google-auth-oauthlib>=1.2.0
 
 # Networking / SSL
-urllib3
-requests
+urllib3>=2.0
+requests>=2.31
 
 # Utilities
-python-dateutil
+python-dateutil>=2.9

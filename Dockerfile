@@ -9,13 +9,4 @@ COPY . .
 
 ENV PORT=8080
 
-CMD [
-  "gunicorn",
-  "app:app",
-  "-k", "uvicorn.workers.UvicornWorker",
-  "-w", "1",
-  "--timeout", "600",
-  "--graceful-timeout", "600",
-  "--keep-alive", "5",
-  "-b", ":8080"
-]
+CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "-w", "1", "-b", "0.0.0.0:8080", "app:app"]

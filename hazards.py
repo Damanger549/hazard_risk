@@ -29,22 +29,21 @@ def ensure_ee_initialized():
         return
 
     try:
-        # Cloud Run / Workload Identity authentication
+        project_id = os.environ.get("GOOGLE_CLOUD_PROJECT", "project-36557bda-6d11-44e5-b18")
+
         ee.Initialize(
-            project=os.environ.get("GOOGLE_CLOUD_PROJECT"),
+            project=project_id,
             url="https://earthengine-highvolume.googleapis.com"
         )
 
         EE_INITIALIZED = True
-        logging.info("✅ Earth Engine initialized using Workload Identity")
+        logging.info(f"✅ Earth Engine initialized for project {project_id}")
 
     except Exception as e:
         raise HazardError(
             stage="EE_INIT",
-            message=f"Earth Engine initialization failed: {str(e)}"
+            message=str(e)
         )
-
-
 
 def safe_to_float(val, default=0.3):
     """Safely convert values to float with fallback"""

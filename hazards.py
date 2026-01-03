@@ -65,7 +65,7 @@ CMIP6_HIST_RANGE = ('1960-01-01', '2014-12-31')
 CMIP6_FUT_RANGE = ('2025-01-01', '2085-12-31')
 MODEL = 'MPI-ESM1-2-HR'
 CHUNK_SIZE_YEARS = 12
-MAX_WORKERS = 4
+MAX_WORKERS = 8
 
 def is_coastal(geom, max_dist_km=50):
     """

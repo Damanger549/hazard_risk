@@ -7,6 +7,7 @@ import logging
 import numpy as np
 import time
 from contextlib import asynccontextmanager
+from fastapi.responses import JSONResponse
 
 # Import after logging setup to avoid issues
 from hazards import run_for_point, HazardError
@@ -135,5 +136,12 @@ async def run_hazards(lat: float, lon: float, city: Optional[str] = None):
         )
 
 @app.exception_handler(404)
-async def not_found_handler(request: Request, exc: Exception):
-    return {"error": "Endpoint not found. Try /docs, /ui, /health, or /run?lat=25.59&lon=85.14"}
+async def not_found_handler(request: Request, exc):
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": "Endpoint not found",
+            "hint": "Try /docs, /ui, /health, or /run?lat=25.59&lon=85.14"
+        }
+    )
+

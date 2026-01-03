@@ -137,7 +137,3 @@ async def run_hazards(lat: float, lon: float, city: Optional[str] = None):
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc: Exception):
     return {"error": "Endpoint not found. Try /docs, /ui, /health, or /run?lat=25.59&lon=85.14"}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True, log_level="info")

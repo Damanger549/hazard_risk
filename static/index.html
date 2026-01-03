@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Climate Risk Scan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- jQuery + DataTables -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+/* ================= GLOBAL ================= */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background: radial-gradient(circle at top, #2b2f4b, #0f1220);
+  color: #e5e7eb;
+}
+
+/* ================= NAV ================= */
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+}
+nav .logo {
+  font-weight: 700;
+  font-size: 18px;
+}
+nav .links a {
+  color: #c7d2fe;
+  margin-left: 18px;
+  text-decoration: none;
+  font-weight: 600;
+}
+nav .links a:hover { color: #fff; }
+
+/* ================= HERO ================= */
+.hero {
+  text-align: center;
+  padding: 40px 16px 20px;
+}
+.hero h1 {
+  font-size: clamp(26px, 4vw, 40px);
+  margin-bottom: 6px;
+}
+.hero p {
+  font-size: clamp(14px, 2.5vw, 18px);
+  color: #cbd5f5;
+}
+
+/* ================= CARD ================= */
+.card {
+  max-width: 1200px;
+  margin: 20px auto;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+}
+
+/* ================= MAP ================= */
+#map {
+  height: min(60vh, 420px);
+  border-radius: 12px;
+  margin-bottom: 18px;
+}
+
+/* ================= CONTROLS ================= */
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.controls input {
+  padding: 11px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
+}
+.controls input[readonly] {
+  background: #f3f4f6;
+}
+.controls button {
+  grid-column: span 2;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.controls button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ================= STATUS ================= */
+#status {
+  display: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-top: 10px;
+}
+.loading { background:#fef3c7; color:#92400e; }
+.error   { background:#fee2e2; color:#991b1b; }
+.success { background:#dcfce7; color:#166534; }
+
+/* ================= MODAL ================= */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  overflow-y: auto;
+}
+.modal-content {
+  background: white;
+  color: #111827;
+  width: min(96%, 1200px);
+  margin: 5vh auto;
+  border-radius: 16px;
+  padding: 20px;
+}
+.modal-content h3 {
+  margin-top: 0;
+}
+
+/* ================= TABLE ================= */
+table.dataTable {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+}
+.color-5 { background:#7f1d1d;color:#fff }
+.color-4 { background:#b91c1c;color:#fff }
+.color-3 { background:#f59e0b }
+.color-2 { background:#93c5fd }
+.color-1 { background:#dbeafe }
+.color-0 { background:#f9fafb }
+
+/* ================= FOOTER ================= */
+footer {
+  text-align: center;
+  padding: 24px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* ================= MOBILE TWEAKS ================= */
+@media (max-width: 600px) {
+  nav .links a { margin-left: 12px; }
+  .controls button { grid-column: span 1; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">🌍 Climate Risk</div>
+  <div class="links">
+    <a href="#">Home</a>
+    <a href="#">Product</a>
+    <a href="#faq">FAQ</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Free Climate Risk Scan</h1>
+  <p>Instant climate hazard profile for any location on Earth</p>
+</div>
+
+<!-- MAIN -->
+<div class="card">
+  <h3>① Select Location</h3>
+  <div id="map"></div>
+
+  <h3>② Run Climate Model</h3>
+  <div class="controls">
+    <input id="lat" placeholder="Latitude" readonly>
+    <input id="lon" placeholder="Longitude" readonly>
+    <input id="city" placeholder="City (optional)">
+    <button id="computeBtn" onclick="compute()" disabled>
+      🚀 Compute Climate Risk
+    </button>
+  </div>
+
+  <div id="status"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3 id="resultTitle"></h3>
+    <table id="hazardTable" class="display" style="width:100%">
+      <thead><tr><th>Hazard</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <br>
+    <button onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="card" id="faq">
+  <h2>FAQ</h2>
+  <p><b>How long does one scan take?</b><br>3–10 minutes depending on location and model complexity.</p>
+  <p><b>What data is used?</b><br>ERA5 observations and CMIP6 SSP scenarios with bias correction.</p>
+  <p><b>Is this free?</b><br>Yes — single-location scans are free.</p>
+</div>
+
+<footer>
+  © Climate Risk Platform — Scientific climate intelligence
+</footer>
+
+<script>
+let map, marker = null;
+let isComputing = false;
+
+/* ================= MAP ================= */
+function initMap() {
+  map = L.map('map', { center:[20,0], zoom:2 });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap'
+  }).addTo(map);
+
+  map.on('click', e => {
+    const lat = e.latlng.lat.toFixed(5);
+    const lon = e.latlng.lng.toFixed(5);
+
+    document.getElementById('lat').value = lat;
+    document.getElementById('lon').value = lon;
+
+    marker ? marker.setLatLng(e.latlng) : marker = L.marker(e.latlng).addTo(map);
+
+    document.getElementById('computeBtn').disabled = false;
+    showStatus(`📍 Location selected: ${lat}, ${lon}`, 'success');
+  });
+}
+
+/* ================= STATUS ================= */
+function showStatus(msg, type){
+  const s = document.getElementById('status');
+  s.textContent = msg;
+  s.className = type;
+  s.style.display = 'block';
+}
+
+/* ================= COMPUTE ================= */
+async function compute() {
+  if (isComputing) return;
+
+  const lat = document.getElementById('lat').value;
+  const lon = document.getElementById('lon').value;
+  const city = document.getElementById('city').value.trim();
+  const btn = document.getElementById('computeBtn');
+
+  if (!lat || !lon) {
+    showStatus('❗ Please select a location on the map first', 'error');
+    return;
+  }
+
+  isComputing = true;
+  btn.disabled = true;
+  btn.textContent = '⏳ Computing...';
+  showStatus('🔄 Running climate models (3–10 minutes)...', 'loading');
+
+  try {
+    const cityParam = city ? `&city=${encodeURIComponent(city)}` : '';
+    const apiUrl = `${window.location.origin}/run?lat=${lat}&lon=${lon}${cityParam}`;
+
+    const res = await fetch(apiUrl);
+    if (!res.ok) throw new Error(`Backend error (${res.status})`);
+
+    const json = await res.json();
+   
+    if (!json.success) {
+      if (json.detail?.error_type === "HAZARD_ERROR") {
+        throw new Error(
+          `Stage: ${json.detail.stage} — ${json.detail.message}`
+        );
+      }
+      throw new Error(json.detail?.message || "Backend failed");
+    }
+
+
+    renderTable(json.data, json.columns, city, lat, lon);
+    showStatus('✅ Scan complete', 'success');
+    document.getElementById('modal').style.display = 'block';
+
+  } catch (e) {
+    showStatus(`❌ Error: ${e.message}`, 'error');
+  } finally {
+    isComputing = false;
+    btn.disabled = false;
+    btn.textContent = '🚀 Compute Climate Risk';
+  }
+}
+
+/* ================= TABLE ================= */
+function scoreClass(v){
+  if(v==null) return 'color-0';
+  if(v>=4) return 'color-5';
+  if(v>=3) return 'color-4';
+  if(v>=2) return 'color-3';
+  if(v>=1) return 'color-2';
+  return 'color-1';
+}
+
+function renderTable(data, columns, city, lat, lon){
+  if ($.fn.DataTable.isDataTable('#hazardTable')) {
+    $('#hazardTable').DataTable().destroy();
+  }
+
+  $('#hazardTable thead tr').html(
+    '<th>Hazard</th>' + columns.slice(1).map(c=>`<th>${c}</th>`).join('')
+  );
+
+  $('#hazardTable tbody').html(
+    data.map(r=>`
+      <tr>
+        <td><b>${r.Hazard}</b></td>
+        ${columns.slice(1).map(c=>{
+          const v = r[c];
+          return `<td class="${scoreClass(v)}" style="text-align:center">
+            ${v==null?'—':v.toFixed(2)}
+          </td>`;
+        }).join('')}
+      </tr>
+    `).join('')
+  );
+
+  $('#hazardTable').DataTable({
+    paging:false,
+    scrollX:true,
+    order:[[0,'asc']]
+  });
+
+  document.getElementById('resultTitle').textContent =
+    `${city || 'Selected Location'} (${lat}, ${lon})`;
+}
+
+/* ================= MODAL ================= */
+function closeModal(){
+  document.getElementById('modal').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', initMap);
+</script>
+
+</body>
+</html>
+
+

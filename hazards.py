@@ -29,38 +29,23 @@ def ensure_ee_initialized():
         return
 
     try:
-        if "GCP_SERVICE_ACCOUNT" not in os.environ:
-            raise HazardError(
-                stage="EE_INIT",
-                message="GCP_SERVICE_ACCOUNT environment variable not set"
-            )
-
-        service_account_info = json.loads(os.environ["GCP_SERVICE_ACCOUNT"])
-
-        with tempfile.NamedTemporaryFile(mode="w+", suffix=".json", delete=False) as f:
-            json.dump(service_account_info, f)
-            key_path = f.name
-
-        credentials = ee.ServiceAccountCredentials(
-            service_account_info["client_email"],
-            key_path
-        )
-
+        # Cloud Run / Workload Identity authentication
         ee.Initialize(
-            credentials,
-            project=service_account_info["project_id"],
+            project=os.environ.get("GOOGLE_CLOUD_PROJECT"),
             url="https://earthengine-highvolume.googleapis.com"
         )
 
         EE_INITIALIZED = True
+        logging.info("✅ Earth Engine initialized using Workload Identity")
 
-    except HazardError:
-        raise
     except Exception as e:
         raise HazardError(
             stage="EE_INIT",
-            message=str(e)
+            message=f"Earth Engine initialization failed: {str(e)}"
         )
+
+
+
 def safe_to_float(val, default=0.3):
     """Safely convert values to float with fallback"""
     if val is None:
